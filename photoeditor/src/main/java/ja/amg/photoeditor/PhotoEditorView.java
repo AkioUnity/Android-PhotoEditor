@@ -15,8 +15,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
-import ja.burhanrashid52.photoeditor.R;
-
 /**
  * <p>
  * This ViewGroup will have the {@link BrushDrawingView} to draw paint on it with {@link ImageView}

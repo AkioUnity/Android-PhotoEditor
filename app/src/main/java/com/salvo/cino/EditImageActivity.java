@@ -5,23 +5,19 @@ import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Path;
-import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.constraint.ConstraintSet;
 import android.support.transition.ChangeBounds;
 import android.support.transition.TransitionManager;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -38,6 +34,8 @@ import com.salvo.cino.filters.FilterListener;
 import com.salvo.cino.filters.FilterViewAdapter;
 import com.salvo.cino.tools.EditingToolsAdapter;
 import com.salvo.cino.tools.ToolType;
+import com.steelkiwi.cropiwa.image.CropIwaResultReceiver;
+import com.steelkiwi.cropiwa.sample.CropActivity;
 
 import org.json.JSONObject;
 
@@ -53,6 +51,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import ja.burhanrashid52.photoeditor.OnPhotoEditorListener;
 import ja.burhanrashid52.photoeditor.OnSaveBitmap;
@@ -64,6 +64,7 @@ import ja.burhanrashid52.photoeditor.TextStyleBuilder;
 import ja.burhanrashid52.photoeditor.ViewType;
 
 public class EditImageActivity extends BaseActivity implements OnPhotoEditorListener,
+        CropIwaResultReceiver.Listener,
         View.OnClickListener,
         PropertiesBSFragment.Properties,
         EmojiBSFragment.EmojiListener,
@@ -88,6 +89,8 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
     private boolean mIsFilterVisible;
     String base64;
     ProgressDialog pDialog;
+
+    private CropIwaResultReceiver cropResultReceiver;
 
 
     @Override
@@ -131,6 +134,13 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
 
         //Set Image Dynamically
         // mPhotoEditorView.getSource().setImageResource(R.drawable.color_palette);
+
+        cropResultReceiver = new CropIwaResultReceiver();
+        cropResultReceiver.setListener(this);
+        cropResultReceiver.register(this);
+
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
     }
 
     private void initViews() {
@@ -232,7 +242,9 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
                 break;
 
             case R.id.imgCamera:
-                Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                imageUri = getImageUri();
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
                 startActivityForResult(cameraIntent, CAMERA_REQUEST);
                 break;
 
@@ -243,6 +255,65 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
                 startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_REQUEST);
                 break;
         }
+    }
+    Uri imageUri;
+    private Uri getImageUri(){
+        Uri m_imgUri = null;
+        File m_file;
+        try {
+            SimpleDateFormat m_sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            String m_curentDateandTime = m_sdf.format(new Date());
+            String m_imagePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + m_curentDateandTime + ".jpg";
+            m_file = new File(m_imagePath);
+            Log.d("d",m_imagePath);
+            m_imgUri = Uri.fromFile(m_file);
+        } catch (Exception p_e) {
+        }
+        return m_imgUri;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case CAMERA_REQUEST:
+                    Log.d("test1",""+imageUri);
+                    mPhotoEditor.clearAllViews();
+//                    Uri uri = data.getData();
+                    startCropActivity(imageUri);
+//                    Bitmap photo = (Bitmap) data.getExtras().get("data");
+//
+//                    mPhotoEditorView.getSource().setImageBitmap(photo);
+                    break;
+                case PICK_REQUEST:
+                    mPhotoEditor.clearAllViews();
+                    Uri uri0 = data.getData();
+                    startCropActivity(uri0);
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Here we store the file url as it will be null after returning from camera
+     * app
+     */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // save file url in bundle as it will be null on scren orientation
+        // changes
+        outState.putParcelable("file_uri", imageUri);
+    }
+
+    /*
+     * Here we restore the fileUri again
+     */
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        // get the file url
+        imageUri = savedInstanceState.getParcelable("file_uri");
     }
 
     @SuppressLint("MissingPermission")
@@ -301,7 +372,7 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
                     @Override
                     public void onBitmapReady(Bitmap saveBitmap) {
                         hideLoading();
-                        showSnackbar("Image changed Bitmap for Base64");
+//                        showSnackbar("Image changed Bitmap for Base64");
 
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         saveBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
@@ -333,54 +404,23 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case CAMERA_REQUEST:
-                    mPhotoEditor.clearAllViews();
-                    Bitmap photo = (Bitmap) data.getExtras().get("data");
-//                    photo=getRoundedShape(photo);
-                    mPhotoEditorView.getSource().setImageBitmap(photo);
-                    break;
-                case PICK_REQUEST:
-                    try {
-                        mPhotoEditor.clearAllViews();
-                        Uri uri = data.getData();
-                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-//                        bitmap=getRoundedShape(bitmap);
-                        mPhotoEditorView.getSource().setImageBitmap(bitmap);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    break;
-            }
+
+    private void setBitmap(Uri uri){
+        Bitmap bitmap = null;
+        try {
+            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+        mPhotoEditorView.getSource().setImageBitmap(bitmap);
     }
 
-    public Bitmap getRoundedShape(Bitmap scaleBitmapImage) {
-
-        int targetWidth = 500;
-        int targetHeight = 500;
-        Bitmap targetBitmap = Bitmap.createBitmap(targetWidth,
-                targetHeight,Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(targetBitmap);
-        Path path = new Path();
-        path.addCircle(((float) targetWidth - 1) / 2,
-                ((float) targetHeight - 1) / 2,
-                (Math.min(((float) targetWidth),
-                        ((float) targetHeight)) / 2),
-                Path.Direction.CCW);
-
-        canvas.clipPath(path);
-        Bitmap sourceBitmap = scaleBitmapImage;
-        canvas.drawBitmap(sourceBitmap,
-                new Rect(0, 0, sourceBitmap.getWidth(),
-                        sourceBitmap.getHeight()),
-                new Rect(0, 0, targetWidth,
-                        targetHeight), null);
-        return targetBitmap;
+    private void startCropActivity(Uri uri) {
+        startActivity(CropActivity.callingIntent(getApplicationContext(), uri));
+//        dismiss();
     }
+
     @Override
     public void onColorChanged(int colorCode) {
         mPhotoEditor.setBrushColor(colorCode);
@@ -614,5 +654,25 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
             }
         }
 
+    }
+
+    @Override
+    public void onCropSuccess(Uri croppedUri) {
+        Log.d("t","onCropsuccess");
+//        Log.d("t",croppedUri.toString());
+        setBitmap(croppedUri);
+    }
+
+
+    @Override
+    public void onCropFailed(Throwable e) {
+        Log.d("tag","CropFailed");
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        cropResultReceiver.unregister(this);
     }
 }

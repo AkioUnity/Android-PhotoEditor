@@ -18,15 +18,15 @@
 
     <ja.burhanrashid52.photoeditor.PhotoEditorView
         android:id="@+id/photoEditorView"
-        android:layout_width="400dp"
-        android:layout_height="400dp"
+        android:layout_width="380dp"
+        android:layout_height="380dp"
         app:layout_constraintBottom_toTopOf="@+id/guideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:background="@android:color/white"
-        app:photo_src="@drawable/got_s"
+        android:background="@android:color/black"
+        app:photo_src="@drawable/logo2"
         />
 
     <ImageView

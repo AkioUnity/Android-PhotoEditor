@@ -2,18 +2,22 @@ package com.steelkiwi.cropiwa.sample;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.salvo.cino.PhotoApp;
+import com.salvo.cino.R;
 import com.steelkiwi.cropiwa.CropIwaView;
-import com.steelkiwi.cropiwa.sample.config.CropViewConfigurator;
+import com.steelkiwi.cropiwa.config.CropIwaSaveConfig;
 import com.steelkiwi.cropiwa.shape.CropIwaOvalShape;
-import com.yarolegovich.mp.MaterialPreferenceScreen;
+
+import java.io.File;
 
 public class CropActivity extends AppCompatActivity {
 
@@ -26,7 +30,6 @@ public class CropActivity extends AppCompatActivity {
     }
 
     private CropIwaView cropView;
-    private CropViewConfigurator configurator;
 
     @Override
     @SuppressWarnings("ConstantConditions")
@@ -34,9 +37,6 @@ public class CropActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crop);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitle(R.string.title_crop);
-        setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         Uri imageUri = getIntent().getParcelableExtra(EXTRA_URI);
@@ -45,11 +45,11 @@ public class CropActivity extends AppCompatActivity {
 
         cropView.configureOverlay()
                 .setCropShape(new CropIwaOvalShape(cropView.configureOverlay()))
+                .setShouldDrawGrid(false)
+//                .setMinWidth(500)
+//                .setMinHeight(500)
                 .apply();
 
-        MaterialPreferenceScreen cropPrefScreen = (MaterialPreferenceScreen) findViewById(R.id.crop_preference_screen);
-        configurator = new CropViewConfigurator(cropView, cropPrefScreen);
-        cropPrefScreen.setStorageModule(configurator);
     }
 
     @Override
@@ -61,7 +61,15 @@ public class CropActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.done) {
-            cropView.crop(configurator.getSelectedSaveConfig());
+            File file=new File(PhotoApp.getPhotoApp().getFilesDir(),
+                    System.currentTimeMillis() + ".png");
+            Log.d("file",file.getAbsolutePath());
+            Uri destinationUri = Uri.fromFile(file);
+            cropView.crop(new CropIwaSaveConfig.Builder(destinationUri)
+                    .setCompressFormat(Bitmap.CompressFormat.PNG)
+                    .setSize(450, 450) //Optional. If not specified, SRC dimensions will be used
+                    .setQuality(100) //Hint for lossy compression formats
+                    .build());
             finish();
         }
         return super.onOptionsItemSelected(item);
