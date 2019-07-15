@@ -5,8 +5,19 @@
     android:id="@+id/rootView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        tools:ignore="MissingConstraints">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/background"
+            android:scaleType="centerCrop" />
+    </RelativeLayout>
 
 
     <android.support.constraint.Guideline
@@ -25,8 +36,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:background="@android:color/black"
-        app:photo_src="@drawable/logo2"
+        app:photo_src="@drawable/cricle"
         />
 
     <ImageView
@@ -52,6 +62,7 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <ImageView
+        android:visibility="gone"
         android:id="@+id/imgGallery"
         android:layout_width="70dp"
         android:layout_height="72dp"
