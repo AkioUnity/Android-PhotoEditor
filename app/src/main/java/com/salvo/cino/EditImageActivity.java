@@ -6,6 +6,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Camera;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -23,8 +24,11 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
 import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.animation.AnticipateOvershootInterpolator;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -92,6 +96,11 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
 
     private CropIwaResultReceiver cropResultReceiver;
 
+    Button btn_capture;
+    Camera camera1;
+    SurfaceView surfaceView;
+    SurfaceHolder surfaceHolder;
+    public static boolean previewing = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -285,11 +294,11 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
 //
 //                    mPhotoEditorView.getSource().setImageBitmap(photo);
                     break;
-                case PICK_REQUEST:
-                    mPhotoEditor.clearAllViews();
-                    Uri uri0 = data.getData();
-                    startCropActivity(uri0);
-                    break;
+//                case PICK_REQUEST:
+//                    mPhotoEditor.clearAllViews();
+//                    Uri uri0 = data.getData();
+//                    startCropActivity(uri0);
+//                    break;
             }
         }
     }
