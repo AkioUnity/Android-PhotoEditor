@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Camera;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -24,8 +23,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
 import android.util.Log;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.animation.AnticipateOvershootInterpolator;
 import android.widget.Button;
@@ -55,8 +52,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import ja.burhanrashid52.photoeditor.OnPhotoEditorListener;
 import ja.burhanrashid52.photoeditor.OnSaveBitmap;
@@ -95,12 +90,6 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
     ProgressDialog pDialog;
 
     private CropIwaResultReceiver cropResultReceiver;
-
-    Button btn_capture;
-    Camera camera1;
-    SurfaceView surfaceView;
-    SurfaceHolder surfaceHolder;
-    public static boolean previewing = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -251,9 +240,9 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
                 break;
 
             case R.id.imgCamera:
-                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                imageUri = getImageUri();
-                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+//                imageUri = getImageUri();
+//                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
                 startActivityForResult(cameraIntent, CAMERA_REQUEST);
                 break;
 
@@ -266,20 +255,6 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
         }
     }
     Uri imageUri;
-    private Uri getImageUri(){
-        Uri m_imgUri = null;
-        File m_file;
-        try {
-            SimpleDateFormat m_sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
-            String m_curentDateandTime = m_sdf.format(new Date());
-            String m_imagePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + m_curentDateandTime + ".jpg";
-            m_file = new File(m_imagePath);
-            Log.d("d",m_imagePath);
-            m_imgUri = Uri.fromFile(m_file);
-        } catch (Exception p_e) {
-        }
-        return m_imgUri;
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
